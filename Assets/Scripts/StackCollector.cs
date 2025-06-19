@@ -25,48 +25,33 @@ public class StackCollector : MonoBehaviour
 
     public void StackItem(Transform item)
     {
-        collectedItems.Add(item); // Add new item to bottom of stack (end of list)
-        stackCount++;
-
         item.SetParent(stackHolder);
+
+        // Use inspector-set verticalOffset instead of object's bounds
+        item.localPosition = new Vector3(0, stackCount * verticalOffset, 0);
         item.localRotation = Quaternion.identity;
         item.localScale = Vector3.one;
 
-        RebuildStackVisuals();
+        collectedItems.Add(item);
+        stackCount++;
 
         if (collectSound && audioSource)
             audioSource.PlayOneShot(collectSound);
     }
 
-    private void RebuildStackVisuals()
-    {
-        // Reposition items so index 0 is on top, last is at bottom
-        for (int i = 0; i < collectedItems.Count; i++)
-        {
-            int reverseIndex = collectedItems.Count - 1 - i; // So first collected is at top
-            collectedItems[i].localPosition = new Vector3(0, reverseIndex * verticalOffset, 0);
-        }
-    }
-
-    public int GetStackCount()
-    {
-        return stackCount;
-    }
-
-    public void StartUnloadLimited(Transform dropPoint, float offsetY, Func<bool> isPlayerStillInZone, int limit, Action<Transform> onItemDropped)
+    // Call this from DropZone and pass a function that checks if player is still in the zone
+    public void StartUnloadIfInZone(Transform dropPoint, float offsetY, Func<bool> isPlayerStillInZone)
     {
         if (collectedItems.Count > 0)
         {
-            StopAllCoroutines();
-            StartCoroutine(AnimateLimitedUnload(dropPoint, offsetY, isPlayerStillInZone, limit, onItemDropped));
+            StopAllCoroutines(); // Stop any previous unloads
+            StartCoroutine(AnimateUnloadWhileInZone(dropPoint, offsetY, isPlayerStillInZone));
         }
     }
 
-    private IEnumerator AnimateLimitedUnload(Transform dropPoint, float offsetY, Func<bool> isPlayerStillInZone, int limit, Action<Transform> onItemDropped)
+    private IEnumerator AnimateUnloadWhileInZone(Transform dropPoint, float offsetY, Func<bool> isPlayerStillInZone)
     {
-        int itemsToDrop = Mathf.Min(limit, collectedItems.Count);
-
-        for (int i = 0; i < itemsToDrop; i++) // Drop from top down
+        for (int i = 0; i < collectedItems.Count; i++)
         {
             if (!isPlayerStillInZone()) yield break;
 
@@ -75,15 +60,15 @@ public class StackCollector : MonoBehaviour
 
             Vector3 targetPos = dropPoint.position + new Vector3(0, i * offsetY, 0);
             float duration = 0.3f;
-            float timePassed = 0f;
+            float elapsed = 0f;
             Vector3 startPos = item.position;
 
-            while (timePassed < duration)
+            while (elapsed < duration)
             {
                 if (!isPlayerStillInZone()) yield break;
 
-                item.position = Vector3.Lerp(startPos, targetPos, timePassed / duration);
-                timePassed += Time.deltaTime;
+                item.position = Vector3.Lerp(startPos, targetPos, elapsed / duration);
+                elapsed += Time.deltaTime;
                 yield return null;
             }
 
@@ -92,14 +77,10 @@ public class StackCollector : MonoBehaviour
             if (dropSound && audioSource)
                 audioSource.PlayOneShot(dropSound);
 
-            onItemDropped?.Invoke(item);
             yield return new WaitForSeconds(SlowTheTimeBy);
         }
 
-        // Remove dropped items from top of the list
-        collectedItems.RemoveRange(0, itemsToDrop);
-        stackCount -= itemsToDrop;
-
-        RebuildStackVisuals(); // Re-stack remaining items
+        collectedItems.Clear();
+        stackCount = 0;
     }
 }
