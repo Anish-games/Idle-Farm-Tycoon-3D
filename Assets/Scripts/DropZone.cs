@@ -3,78 +3,69 @@ using UnityEngine;
 
 public class DropZone : MonoBehaviour
 {
-    [Header("Drop Zone Settings")]
+    [Header("Drop Zone")]
     public int capacity = 4;
     public Transform dropPoint;
     public float dropOffsetY = 0.6f;
 
-    [Header("Processing")]
+    [Header("Factory")]
     public ProcessingFactory processingFactory;
+    public DropZoneUpgradeUI upgradeUI;
 
-    private List<Transform> collectedItems = new List<Transform>();
-    private bool playerInZone = false;
-    private bool isProcessing = false;
+    private List<Transform> collectedItems = new();
+    private bool playerInZone, isProcessing;
 
-    private void OnTriggerEnter(Collider other)
+    void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player") && !isProcessing)
-        {
-            playerInZone = true;
-            StackCollector collector = other.GetComponentInChildren<StackCollector>();
-
-            if (collector != null)
-            {
-                int allowedToDrop = Mathf.Min(capacity - collectedItems.Count, collector.GetStackCount());
-
-                if (allowedToDrop > 0)
-                {
-                    collector.StartUnloadLimited(
-                        dropPoint,
-                        dropOffsetY,
-                        () => playerInZone,
-                        allowedToDrop,
-                        OnItemDropped
-                    );
-                }
-                else
-                {
-                    Debug.Log("Drop zone is full!");
-                }
-            }
-        }
+        if (!other.CompareTag("Player")) return;
+        playerInZone = true;
+        TryDropOld();
+        upgradeUI?.ShowUI(this);
     }
 
-    private void OnTriggerExit(Collider other)
+    void OnTriggerExit(Collider other)
     {
-        if (other.CompareTag("Player"))
-            playerInZone = false;
+        if (!other.CompareTag("Player")) return;
+        playerInZone = false;
+        upgradeUI?.HideUI();
     }
 
-    private void OnItemDropped(Transform item)
+    void OnItemDropped(Transform item)
     {
-        CollectibleType type = item.GetComponent<CollectibleType>();
-        if (type != null && type.type != CollectibleKind.Old)
-        {
-            Debug.Log("Only old collectibles can be dropped here.");
+        if (item.GetComponent<CollectibleType>()?.type != CollectibleKind.Old)
             return;
-        }
 
         collectedItems.Add(item);
 
-        if (collectedItems.Count >= capacity && !isProcessing && processingFactory != null && processingFactory.CanProcess())
+        if (collectedItems.Count >= capacity && !isProcessing && processingFactory.CanProcess())
         {
-            Debug.Log("Drop zone full, sending to factory.");
             isProcessing = true;
-
             processingFactory.StartProcessing(new List<Transform>(collectedItems), () =>
             {
                 collectedItems.Clear();
                 isProcessing = false;
-                Debug.Log("Drop zone cleared, ready for next input.");
+                if (playerInZone) TryDropOld();
             });
         }
     }
 
+    void TryDropOld()
+    {
+        if (isProcessing) return;
 
+        var player = GameObject.FindGameObjectWithTag("Player");
+        var col = player?.GetComponentInChildren<StackCollector>();
+        if (col == null) return;
 
+        // Drop only Old
+        int haveOld = col.GetStackCount(CollectibleKind.Old);
+        if (haveOld == 0) return;
+
+        int allowed = Mathf.Min(capacity - collectedItems.Count, haveOld);
+        if (allowed > 0)
+        {
+            col.StartUnloadLimited(dropPoint, dropOffsetY,
+                () => playerInZone, allowed, OnItemDropped);
+        }
+    }
 }
