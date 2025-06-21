@@ -1675,12 +1675,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   oldCollectiblePool: {fileID: 827629636}
-  numberToMaintain: 10
+  numberToMaintain: 50
   pointA: {fileID: 553541878}
   pointB: {fileID: 1836821419}
   pointC: {fileID: 1154673679}
   pointD: {fileID: 946031753}
-  checkInterval: 2
+  checkInterval: 50
 --- !u!4 &305917552
 Transform:
   m_ObjectHideFlags: 0
@@ -3683,7 +3683,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   prefab: {fileID: 7556330875218142193, guid: b7b0ad0a2143a8544b7f014c8d891c99, type: 3}
-  initialSize: 20
+  initialSize: 30
 --- !u!4 &827629637
 Transform:
   m_ObjectHideFlags: 0
@@ -3891,7 +3891,7 @@ MonoBehaviour:
   newCollectiblePool: {fileID: 631446206}
   processingTime: 5
   spawnPoint: {fileID: 1368299160}
-  verticalOffset: 2
+  verticalOffset: 1
   countdownText: {fileID: 416297903}
 --- !u!4 &891059263
 Transform:
@@ -10978,17 +10978,9 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1524613703412790627, guid: 0e3a2f4696468d84fb9a80d09d230dac, type: 3}
-      propertyPath: verticalOffset
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 3337276751118877387, guid: 0e3a2f4696468d84fb9a80d09d230dac, type: 3}
       propertyPath: m_Name
       value: Player
-      objectReference: {fileID: 0}
-    - target: {fileID: 3395657920684983759, guid: 0e3a2f4696468d84fb9a80d09d230dac, type: 3}
-      propertyPath: verticalOffset
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7067850432464929378, guid: 0e3a2f4696468d84fb9a80d09d230dac, type: 3}
       propertyPath: m_RootOrder

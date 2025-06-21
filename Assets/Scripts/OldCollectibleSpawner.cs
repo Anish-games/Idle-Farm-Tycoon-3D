@@ -18,13 +18,26 @@ public class OldCollectibleSpawner : MonoBehaviour
 
     IEnumerator SpawnLoop()
     {
+        
+        CleanUpInactive();
+
+        int toSpawn = numberToMaintain - activeCollectibles.Count;
+        if (toSpawn > 0)
+        {
+            for (int i = 0; i < toSpawn; i++)
+            {
+                SpawnOne();
+            }
+        }
+
+       
         while (true)
         {
             yield return new WaitForSeconds(checkInterval);
 
             CleanUpInactive();
 
-            int toSpawn = numberToMaintain - activeCollectibles.Count;
+            toSpawn = numberToMaintain - activeCollectibles.Count;
             if (toSpawn > 0)
             {
                 for (int i = 0; i < toSpawn; i++)
@@ -43,6 +56,13 @@ public class OldCollectibleSpawner : MonoBehaviour
         var collectible = obj.GetComponent<CollectibleType>();
         if (collectible != null)
             collectible.SetType(CollectibleKind.Old);
+
+
+        var eggPickup = obj.GetComponent<EggPickup>();
+        if (eggPickup != null)
+            eggPickup.ResetPickup();
+
+       
 
         activeCollectibles.Add(obj);
     }

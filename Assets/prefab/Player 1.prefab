@@ -732,7 +732,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   stackHolder: {fileID: 3158796078530530011}
-  verticalOffset: 2
+  verticalOffset: 1
   slowTimeBetweenDrops: 0.1
   collectSound: {fileID: 8300000, guid: 974ca5825f36be3448177c65902ff8ba, type: 3}
   dropSound: {fileID: 8300000, guid: 0d3127ed1dfd3184cb2b72124cd10646, type: 3}
@@ -1678,7 +1678,7 @@ Transform:
   - {fileID: 6518972136815693612}
   - {fileID: 3043728199974843623}
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: -162.34, z: 0}
 --- !u!95 &3055057999182546389
 Animator:
@@ -2728,7 +2728,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   stackHolder: {fileID: 3861586748008312177}
-  verticalOffset: 2
+  verticalOffset: 1
   slowTimeBetweenDrops: 0.1
   collectSound: {fileID: 8300000, guid: 974ca5825f36be3448177c65902ff8ba, type: 3}
   dropSound: {fileID: 8300000, guid: 0d3127ed1dfd3184cb2b72124cd10646, type: 3}
