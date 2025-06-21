@@ -67,5 +67,16 @@ public class EggPickup : MonoBehaviour
 
             targetCollector.StackItem(transform);
         }
+
+
+    }
+
+    public void ResetPickup()
+    {
+        isCollected = false; // Mark as "not collected" so it can be picked up again
+        if (TryGetComponent<Collider>(out var col))
+            col.enabled = true; // Enable the collider so it can be detected
+        if (TryGetComponent<Rigidbody>(out var rb))
+            rb.isKinematic = true; // Make sure it's not kinematic (if you want it to move with physics)
     }
 }
