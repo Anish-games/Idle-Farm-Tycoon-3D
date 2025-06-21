@@ -1,76 +1,61 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class ProcessingFactory : MonoBehaviour
 {
-    [Header("Processing Settings")]
+    [Header("Pools")]
+    public ObjectPool oldCollectiblePool;
+    public ObjectPool newCollectiblePool;
+
+    [Header("Settings")]
     public float processingTime = 10f;
-    public int maxProcessedCount = 2; // Editable in Inspector
-    public GameObject collectiblePrefab;
     public Transform spawnPoint;
-    public float verticalOffset = 2f; // For stacking new collectibles
+    public float verticalOffset = 2f;
 
-    private int currentProcessedCount = 0;
-    private bool isProcessing = false;
+    [Header("UI")]
+    public TextMeshProUGUI countdownText;
 
-    public bool CanProcess()
+    private bool isProcessing;
+
+    public bool CanProcess() => !isProcessing;
+
+    public void StartProcessing(List<Transform> inputCollectibles, System.Action onComplete)
     {
-        return currentProcessedCount < maxProcessedCount;
+        if (isProcessing || inputCollectibles.Count < 2) return;
+        StartCoroutine(Process(inputCollectibles, onComplete));
     }
 
-    public void StartProcessing(List<Transform> inputCollectibles, System.Action onProcessingComplete)
-    {
-        if (isProcessing || !CanProcess()) return;
-
-        StartCoroutine(Process(inputCollectibles, onProcessingComplete));
-    }
-
-    private IEnumerator Process(List<Transform> inputCollectibles, System.Action onProcessingComplete)
+    private IEnumerator Process(List<Transform> inputCollectibles, System.Action onComplete)
     {
         isProcessing = true;
 
-        Debug.Log("Processing started...");
-
-        yield return new WaitForSeconds(processingTime);
-
-        // Destroy input collectibles
-        foreach (Transform item in inputCollectibles)
+        // 1) Countdown
+        float t = processingTime;
+        while (t > 0f)
         {
-            if (item != null)
-                Destroy(item.gameObject);
+            t -= Time.deltaTime;
+            if (countdownText) countdownText.text = $"Processing: {Mathf.CeilToInt(t)}s";
+            yield return null;
         }
+        if (countdownText) countdownText.text = "";
 
-        // Spawn new collectible
-        if (collectiblePrefab && spawnPoint && CanProcess())
+        // 2) Return old items to pool
+        foreach (var tr in inputCollectibles)
+            if (tr != null)
+                tr.GetComponent<PoolableObject>()?.ReturnToPool();
+
+        // 3) Spawn new items (1 per 2 old)
+        int toSpawn = inputCollectibles.Count / 2;
+        for (int i = 0; i < toSpawn; i++)
         {
-            // Count how many new collectibles already exist under spawnPoint
-            int currentStackHeight = 0;
-            foreach (Transform child in spawnPoint)
-            {
-                var type = child.GetComponent<CollectibleType>();
-                if (type != null && type.type == CollectibleKind.New)
-                {
-                    currentStackHeight++;
-                }
-            }
-
-            Vector3 stackPosition = spawnPoint.position + new Vector3(0, currentStackHeight * verticalOffset, 0);
-
-            GameObject newCollectible = Instantiate(collectiblePrefab, stackPosition, spawnPoint.rotation);
-            Debug.Log("New collectible spawned at: " + stackPosition);
-
-            // Make sure it is marked as "New"
-            CollectibleType newType = newCollectible.GetComponent<CollectibleType>();
-            if (newType != null)
-            {
-                newType.type = CollectibleKind.New;
-            }
-
-            currentProcessedCount++;
+            Vector3 pos = spawnPoint.position + Vector3.up * verticalOffset * i;
+            var obj = newCollectiblePool.GetFromPool(pos, spawnPoint.rotation);
+            obj.GetComponent<CollectibleType>()?.SetType(CollectibleKind.New);
         }
 
         isProcessing = false;
-        onProcessingComplete?.Invoke();
+        onComplete?.Invoke();
     }
 }
